@@ -26,6 +26,8 @@ TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
 
+BASE_URL = "http://h.bo.gg:8111"
+
 
 # Application definition
 
