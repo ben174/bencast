@@ -7,6 +7,7 @@ import re
 import settings
 from django.http import HttpResponse
 from feedgen.feed import FeedGenerator
+from util import hss
 
 
 pacific = pytz.timezone('America/Los_Angeles')
@@ -27,6 +28,18 @@ def configure_feed(feed, title, prefix):
     feed.subtitle('Ben\'s personal podcast feed.')
     feed.language('en')
     feed.podcast.itunes_image(settings.BASE_URL+'/static/' + prefix + '.jpg')
+
+def get_description(date):
+    path = 'static/desc/%s-%s-%s.txt' % (date.year, date.month, date.day)
+    if os.path.isfile(path):
+        f = open(path, 'r')
+        return f.read()
+    f = open(path, 'rb')
+    description = hss.get_show_description(date)
+    f.write(description)
+    f.flush()
+    f.close()
+    return description
 
 def al_feed(request):
     title = string.translate('Negvr Ynatr Cbqpnfg', rot13)
@@ -89,10 +102,12 @@ def hs_feed(request):
             ep_title, date = [x.strip() for x in audio_file.split('-')]
             date = date.split('.')[0]
             year, month, day = [int(d) for d in date.split('_')]
-            dt = pacific.localize(datetime.datetime(year, month, day, 0, 0, 0))
+            dt = datetime.datetime(year, month, day, 0, 0, 0)
+            description = get_description(dt)
+            dt = pacific.localize()
             fe.published(dt)
             fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
-            fe.description('%s: %s/%s/%s' % (ep_title, month, day, year))
+            fe.description(description)
             fe.enclosure(settings.BASE_URL + '/static/hs/%s' % audio_file, 0, 'audio/mp4a-latm')
         except:
             print 'Error processing file: %s' % audio_file
