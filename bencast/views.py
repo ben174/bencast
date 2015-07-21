@@ -34,7 +34,8 @@ def get_description(date):
     if os.path.isfile(path):
         f = open(path, 'r')
         return f.read()
-    f = open(path, 'rb')
+    print 'description not cached. fetching: ' % date
+    f = open(path, 'wb')
     description = hss.get_show_description(date)
     f.write(description)
     f.flush()
@@ -104,13 +105,15 @@ def hs_feed(request):
             year, month, day = [int(d) for d in date.split('_')]
             dt = datetime.datetime(year, month, day, 0, 0, 0)
             description = get_description(dt)
-            dt = pacific.localize()
+            dt = pacific.localize(dt)
             fe.published(dt)
             fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
             fe.description(description)
             fe.enclosure(settings.BASE_URL + '/static/hs/%s' % audio_file, 0, 'audio/mp4a-latm')
-        except:
+        except Exception as e:
             print 'Error processing file: %s' % audio_file
+            print str(e)
+            print e.message
     return HttpResponse(fg.rss_str(pretty=True), content_type='application/rss+xml')
 
 

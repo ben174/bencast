@@ -29,7 +29,3 @@ def get_show_description(query_date):
     xpath = weekday_to_xpath(query_date.weekday())
     elem = tree.xpath(xpath)[0]
     return elem.text_content().strip()
-
-query_date = datetime.date(2015, 07, 8)
-print get_show_description(query_date)
-
