@@ -17,10 +17,29 @@ class BencastFeedGenerator(FeedGenerator):
 
 app = Flask(__name__)
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+'''
+import boto3
+s3 = boto3.resource('s3')
+s3_client = boto3.client('s3')
+bucket = s3.Bucket('bencast')
+for key in bucket.objects.filter(Prefix='hh/', Delimiter='/'):
+'''
 
+import boto
+import boto.s3.connection
+import environment
+
+conn = boto.connect_s3(
+    aws_access_key_id = environment.ACCESS_KEY_ID,
+    aws_secret_access_key = environment.SECRET_ACCESS_KEY,
+)
+bucket = conn.get_bucket('bencast')
+
+
+
+@app.route("/")
+def home():
+    return "Go away."
 
 def configure_feed(feed, title, prefix):
     feed.prefix = prefix
@@ -77,8 +96,9 @@ def hh_feed():
     title = string.translate('Gur Uvfgbel bs Ubjneq Fgrea', rot13)
     fg = FeedGenerator()
     configure_feed(fg, title, 'hh')
-    audio_files = os.listdir('static/hh')
-    for audio_file in audio_files:
+
+    for key in bucket.list("hh/", ""):
+        audio_file = key.key[3:]
         try:
             fe = fg.add_entry()
             fe.id(audio_file)
@@ -93,7 +113,7 @@ def hh_feed():
             title = title.replace(')', ' ')
             fe.title(title)
             fe.description(title)
-            fe.enclosure(request.url_root + '/static/hh/%s' % audio_file, 0, 'audio/mp4a-latm')
+            fe.enclosure(key.generate_url(expires_in=300), 0, 'audio/mp4a-latm')
         except:
             print 'Error processing file: %s' % audio_file
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
