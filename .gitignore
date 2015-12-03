@@ -55,3 +55,6 @@ target/
 
 
 environment.py
+.idea/
+venv/
+static/
