@@ -1,2 +1,2 @@
 FROM python:2-onbuild
-CMD python bencast.py
+CMD gunicorn -b 0.0.0.0:8000 bencast:app
