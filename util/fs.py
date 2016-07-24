@@ -11,4 +11,3 @@ bucket = conn.get_bucket('bencast')
 
 def get_keys(d):
     return bucket.list(d + '/', '/')
-

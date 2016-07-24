@@ -39,7 +39,7 @@ def get_description(date):
         return f.read()
     print 'description not cached. fetching: %s' % date
     f = open(path, 'wb')
-    description = hss.get_show_description(date)
+    description = get_show_description(date)
     f.write(description)
     f.flush()
     f.close()
