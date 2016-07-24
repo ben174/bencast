@@ -44,15 +44,25 @@ cache = {}
 
 def get_description(date):
     path = 'desc/%s-%s-%s.txt' % (date.year, date.month, date.day)
-    if path in cache.keys():
-        return cache[path]
+
+    # try local cache
+    ret = cache.get(path)
+    if ret:
+        return ret
+
+    # try s3 cache
     key = bucket.get_key(path)
     if key:
-        return key.read()
-    print 'description not cached. fetching: %s' % date
-    description = get_show_description(date)
+        ret = key.read()
+        cache[path] = ret
+        return ret
+
+    # scrape description and cache it
+    print 'Scraping description for: {}'.format(date)
+    ret = get_show_description(date)
     key = boto.s3.key.Key(bucket)
     key.key = path
-    key.set_contents_from_string(description)
-    cache[path] = description
-    return description
+    key.set_contents_from_string(ret)
+    cache[path] = ret
+
+    return ret
