@@ -6,6 +6,8 @@ import environment
 from lxml import html
 import requests
 import boto
+from boto.s3.key import Key
+
 
 conn = boto.connect_s3(
     aws_access_key_id = environment.ACCESS_KEY_ID,
@@ -39,15 +41,19 @@ def get_show_description(query_date):
     elem = tree.xpath(xpath)[0]
     return elem.text_content().strip()
 
+cache = {}
 
 def get_description(date):
-
-
     path = 'desc/%s-%s-%s.txt' % (date.year, date.month, date.day)
+    if path in cache.keys():
+        return cache[path]
     key = bucket.get_key(path)
     if key:
         return key.read()
     print 'description not cached. fetching: %s' % date
     description = get_show_description(date)
+    key = Key(bucket)
+    key.key = path
     key.set_contents_from_string(description)
+    cache[path] = description
     return description
