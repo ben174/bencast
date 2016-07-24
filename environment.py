@@ -1,3 +1,5 @@
+import os
+
 try:
     from secrets import *
 except:
