@@ -147,6 +147,20 @@ rot13 = string.maketrans(
     "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz",
     "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
 
+# precache
+for item in bucket.list(prefix='hs/'):
+    try:
+        audio_file = item.key[3:]
+        ep_title, date = [x.strip() for x in audio_file.split('-')]
+        date = date.split('.')[0]
+        year, month, day = [int(d) for d in date.split('_')]
+        dt = datetime.datetime(year, month, day, 0, 0, 0)
+        dt = pacific.localize(dt)
+        print 'Caching description for: {} ({})'.format(ep_title, date)
+        description = get_description(dt)
+    except:
+        print 'Error processing: {}'.format(item.key)
+
 if __name__ == "__main__":
     app.run(
         host='0.0.0.0',
