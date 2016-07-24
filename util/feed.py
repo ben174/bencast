@@ -13,4 +13,4 @@ class BencastFeedGenerator(FeedGenerator):
         self.link(href='http://www.bugben.com', rel='alternate')
         self.subtitle('Ben\'s personal podcast feed.')
         self.language('en')
-        self.podcast.itunes_image('/static/' + prefix + '.jpg')
+        self.podcast.itunes_image('https://s3-us-west-1.amazonaws.com/bencast/{}.jpg'.format(prefix))

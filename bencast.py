@@ -6,12 +6,18 @@ import re
 from flask import Flask, Response
 from functools import wraps
 from flask import request, Response
+import boto
 
 from util.feed import BencastFeedGenerator
 from util.fs import get_keys
 from util.hss import get_description
 import environment
 
+conn = boto.connect_s3(
+    aws_access_key_id = environment.ACCESS_KEY_ID,
+    aws_secret_access_key = environment.SECRET_ACCESS_KEY,
+)
+bucket = conn.get_bucket('bencast')
 
 
 pacific = pytz.timezone('America/Los_Angeles')
@@ -52,8 +58,8 @@ def al_feed():
     title = string.translate('Negvr Ynatr Cbqpnfg', rot13)
     fg = BencastFeedGenerator()
     fg.configure(title, 'al')
-    for key in get_keys('al'):
-        audio_file = key.key[3:]
+    for item in bucket.list(prefix='hh/'):
+        audio_file = item.key
         try:
             fe = fg.add_entry()
             fe.id(audio_file)
@@ -65,7 +71,7 @@ def al_feed():
             fe.published(dt)
             fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
             fe.description('%s: %s/%s/%s' % (ep_title, month, day, year))
-            fe.enclosure(key.generate_url(expires_in=300), 0, 'audio/mp4a-latm')
+            fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
         except Exception as e:
             print 'Error processing file: %s' % audio_file
             print str(e)
@@ -79,8 +85,8 @@ def hh_feed():
     fg = BencastFeedGenerator()
     fg.configure(title, 'hh')
 
-    for key in get_keys('hh'):
-        audio_file = key.key[3:]
+    for item in bucket.list(prefix='hh/'):
+        audio_file = item.key
         try:
             fe = fg.add_entry()
             fe.id(audio_file)
@@ -95,7 +101,7 @@ def hh_feed():
             title = title.replace(')', ' ')
             fe.title(title)
             fe.description(title)
-            fe.enclosure(key.generate_url(expires_in=300), 0, 'audio/mp4a-latm')
+            fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
         except:
             print 'Error processing file: %s' % audio_file
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
@@ -106,8 +112,8 @@ def hs_feed():
     title = string.translate('Gur Ubjneq Fgrea Fubj', rot13)
     fg = BencastFeedGenerator()
     fg.configure(title, 'hs')
-    for key in get_keys('hs'):
-        audio_file = key.key[3:]
+    for item in bucket.list(prefix='hs/'):
+        audio_file = item.key
         fe = fg.add_entry()
         fe.id(audio_file)
         ep_title, date = [x.strip() for x in audio_file.split('-')]
@@ -119,8 +125,22 @@ def hs_feed():
         fe.published(dt)
         fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
         fe.description(description)
-        fe.enclosure(key.generate_url(expires_in=300), 0, 'audio/mp4a-latm')
+        fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
+
+
+@app.route('/proxy/<path:path>')
+@requires_auth
+def static_proxy(path):
+    key = boto.s3.key.Key(bucket)
+    key.key = path
+
+    try:
+        key.open_read()
+        headers = dict(key.resp.getheaders())
+        return Response(key, headers=headers)
+    except boto.exception.S3ResponseError as e:
+        return flask.Response(e.body, status=e.status, headers=key.resp.getheaders())
 
 
 rot13 = string.maketrans(

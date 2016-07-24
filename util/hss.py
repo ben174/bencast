@@ -6,7 +6,6 @@ import environment
 from lxml import html
 import requests
 import boto
-from boto.s3.key import Key
 
 
 conn = boto.connect_s3(
@@ -52,7 +51,7 @@ def get_description(date):
         return key.read()
     print 'description not cached. fetching: %s' % date
     description = get_show_description(date)
-    key = Key(bucket)
+    key = boto.s3.key.Key(bucket)
     key.key = path
     key.set_contents_from_string(description)
     cache[path] = description
