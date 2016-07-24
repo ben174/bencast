@@ -1,1 +1,1 @@
-web: gunicorn -w 4 -b bencast:app
+web: gunicorn -w 4 bencast:app
