@@ -1,9 +1,17 @@
 import datetime
-
 import os
+
+import environment
+
 from lxml import html
 import requests
+import boto
 
+conn = boto.connect_s3(
+    aws_access_key_id = environment.ACCESS_KEY_ID,
+    aws_secret_access_key = environment.SECRET_ACCESS_KEY,
+)
+bucket = conn.get_bucket('bencast')
 
 def weekday_to_xpath(index):
     paths = [
@@ -33,14 +41,13 @@ def get_show_description(query_date):
 
 
 def get_description(date):
-    path = 'static/desc/%s-%s-%s.txt' % (date.year, date.month, date.day)
-    if os.path.isfile(path):
-        f = open(path, 'r')
-        return f.read()
+
+
+    path = 'desc/%s-%s-%s.txt' % (date.year, date.month, date.day)
+    key = bucket.get_key(path)
+    if key:
+        return key.read()
     print 'description not cached. fetching: %s' % date
-    f = open(path, 'wb')
     description = get_show_description(date)
-    f.write(description)
-    f.flush()
-    f.close()
+    key.set_contents_from_string(description)
     return description
