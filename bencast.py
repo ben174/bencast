@@ -59,7 +59,7 @@ def al_feed():
     fg = BencastFeedGenerator()
     fg.configure(title, 'al')
     for item in bucket.list(prefix='hh/'):
-        audio_file = item.key
+        audio_file = item.key[3:]
         try:
             fe = fg.add_entry()
             fe.id(audio_file)
@@ -71,7 +71,7 @@ def al_feed():
             fe.published(dt)
             fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
             fe.description('%s: %s/%s/%s' % (ep_title, month, day, year))
-            fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
+            fe.enclosure('http://listen.bugben.com/proxy/al/{}'.format(audio_file), 0, 'audio/mp4a-latm')
         except Exception as e:
             print 'Error processing file: %s' % audio_file
             print str(e)
@@ -86,7 +86,7 @@ def hh_feed():
     fg.configure(title, 'hh')
 
     for item in bucket.list(prefix='hh/'):
-        audio_file = item.key
+        audio_file = item.key[3:]
         try:
             fe = fg.add_entry()
             fe.id(audio_file)
@@ -101,7 +101,7 @@ def hh_feed():
             title = title.replace(')', ' ')
             fe.title(title)
             fe.description(title)
-            fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
+            fe.enclosure('http://listen.bugben.com/proxy/hh/{}'.format(audio_file), 0, 'audio/mp4a-latm')
         except:
             print 'Error processing file: %s' % audio_file
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
@@ -113,7 +113,7 @@ def hs_feed():
     fg = BencastFeedGenerator()
     fg.configure(title, 'hs')
     for item in bucket.list(prefix='hs/'):
-        audio_file = item.key
+        audio_file = item.key[3:]
         fe = fg.add_entry()
         fe.id(audio_file)
         ep_title, date = [x.strip() for x in audio_file.split('-')]
@@ -125,7 +125,7 @@ def hs_feed():
         fe.published(dt)
         fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
         fe.description(description)
-        fe.enclosure('http://listen.bugben.com/proxy/{}'.format(audio_file), 0, 'audio/mp4a-latm')
+        fe.enclosure('http://listen.bugben.com/proxy/hs/{}'.format(audio_file), 0, 'audio/mp4a-latm')
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
 
 
