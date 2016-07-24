@@ -4,15 +4,42 @@ import string
 import pytz
 import re
 from flask import Flask, Response
+from functools import wraps
+from flask import request, Response
+
 from util.feed import BencastFeedGenerator
 from util.fs import get_keys
 from util.hss import get_description
+import environment
+
+
 
 pacific = pytz.timezone('America/Los_Angeles')
 
 app = Flask(__name__)
 
 
+def check_auth(username, xwrd):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == environment.USERNAME and xwrd == environment.PASSWORD
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
 
 @app.route("/")
 def home():
@@ -20,6 +47,7 @@ def home():
 
 
 @app.route("/al")
+@requires_auth
 def al_feed():
     title = string.translate('Negvr Ynatr Cbqpnfg', rot13)
     fg = BencastFeedGenerator()
@@ -45,6 +73,7 @@ def al_feed():
 
 
 @app.route("/hh")
+@requires_auth
 def hh_feed():
     title = string.translate('Gur Uvfgbel bs Ubjneq Fgrea', rot13)
     fg = BencastFeedGenerator()
@@ -72,6 +101,7 @@ def hh_feed():
     return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
 
 @app.route("/hs")
+@requires_auth
 def hs_feed():
     title = string.translate('Gur Ubjneq Fgrea Fubj', rot13)
     fg = BencastFeedGenerator()

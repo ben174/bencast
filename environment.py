@@ -5,3 +5,5 @@ try:
 except:
     ACCESS_KEY_ID = os.environ.get('ACCESS_KEY_ID')
     SECRET_ACCESS_KEY = os.environ.get('SECRET_ACCESS_KEY')
+    USERNAME = os.environ.get('USERNAME')
+    PASSWORD = os.environ.get('PASSWORD')
