@@ -54,7 +54,7 @@ docs/_build/
 target/
 
 
-environment.py
+secrets.py
 .idea/
 venv/
 static/
