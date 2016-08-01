@@ -109,6 +109,8 @@ def hh_feed():
 @app.route("/hs")
 @requires_auth
 def hs_feed():
+    if not precached:
+        precache()
     title = string.translate('Gur Ubjneq Fgrea Fubj', rot13)
     fg = BencastFeedGenerator()
     fg.configure(title, 'hs')
@@ -147,18 +149,23 @@ rot13 = string.maketrans(
     "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz",
     "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
 
-# precache
-for item in bucket.list(prefix='hs/'):
-    try:
-        audio_file = item.key[3:]
-        ep_title, date = [x.strip() for x in audio_file.split('-')]
-        date = date.split('.')[0]
-        year, month, day = [int(d) for d in date.split('_')]
-        dt = datetime.datetime(year, month, day, 0, 0, 0)
-        dt = pacific.localize(dt)
-        description = get_description(dt)
-    except:
-        print 'Error prefetching: {}'.format(item.key)
+precached = False
+
+def precache():
+    # precache
+    for item in bucket.list(prefix='hs/'):
+        try:
+            audio_file = item.key[3:]
+            ep_title, date = [x.strip() for x in audio_file.split('-')]
+            date = date.split('.')[0]
+            year, month, day = [int(d) for d in date.split('_')]
+            dt = datetime.datetime(year, month, day, 0, 0, 0)
+            dt = pacific.localize(dt)
+            description = get_description(dt)
+        except:
+            print 'Error prefetching: {}'.format(item.key)
+    global precached
+    precached = True
 
 if __name__ == "__main__":
     app.run(
