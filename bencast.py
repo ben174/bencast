@@ -10,7 +10,7 @@ import boto
 
 from util.feed import BencastFeedGenerator
 from util.fs import get_keys
-from util.hss import get_description
+from util.hss import get_description, get_feed, save_feed
 import environment
 
 conn = boto.connect_s3(
@@ -109,6 +109,9 @@ def hh_feed():
 @app.route("/hs")
 @requires_auth
 def hs_feed():
+    ret = get_feed()
+    if ret:
+        return Response(ret, mimetype='application/rss+xml')
     if not precached:
         precache()
     title = string.translate('Gur Ubjneq Fgrea Fubj', rot13)
@@ -128,7 +131,9 @@ def hs_feed():
         fe.title('%s: %s/%s/%s' % (ep_title, month, day, year))
         fe.description(description)
         fe.enclosure('http://listen.bugben.com/proxy/hs/{}'.format(audio_file), 0, 'audio/mp4a-latm')
-    return Response(fg.rss_str(pretty=True), mimetype='application/rss+xml')
+    ret = fg.rss_str(pretty=True)
+    save_feed(ret)
+    return Response(ret, mimetype='application/rss+xml')
 
 
 @app.route('/proxy/<path:path>')

@@ -66,3 +66,16 @@ def get_description(date):
     cache[path] = ret
 
     return ret
+
+def save_feed(data):
+    key = boto.s3.key.Key(bucket)
+    key.key = 'feed.xml'
+    key.set_contents_from_string(data)
+
+def get_feed():
+    # try s3 cache
+    key = bucket.get_key('feed.xml')
+    if key:
+        ret = key.read()
+        return ret
+    return None
