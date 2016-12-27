@@ -18,7 +18,7 @@ def weekday_to_xpath(index):
     paths = [
         (2, 1),
         (2, 2),
-        (4, 1),
+        (5, 1),
         (4, 2),
         (6, 1),
     ]

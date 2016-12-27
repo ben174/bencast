@@ -121,9 +121,17 @@ def hs_feed():
         audio_file = item.key[3:]
         fe = fg.add_entry()
         fe.id(audio_file)
-        ep_title, date = [x.strip() for x in audio_file.split('-')]
-        date = date.split('.')[0]
-        year, month, day = [int(d) for d in date.split('_')]
+
+        if '-' not in audio_file:
+            # new format
+            date, ep_title = re.findall(r'([0-9]+\.[0-9]+\.[0-9]+).*\((.*)\)', audio_file)[0]
+            month, day, year = [int(d) for d in date.split('.')]
+            year = 2000 + year
+        else:
+            # old format
+            ep_title, date = [x.strip() for x in audio_file.split('-')]
+            date = date.split('.')[0]
+            year, month, day = [int(d) for d in date.split('_')]
         dt = datetime.datetime(year, month, day, 0, 0, 0)
         description = get_description(dt)
         dt = pacific.localize(dt)
